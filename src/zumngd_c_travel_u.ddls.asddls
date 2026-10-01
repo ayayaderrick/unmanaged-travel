@@ -2,6 +2,8 @@
 @EndUserText.label: 'Travel Projection View'
 @Metadata.ignorePropagatedAnnotations: true
 
+@Metadata.allowExtensions: true
+
 @Search.searchable: true
 
 define root view entity ZUMNGD_C_TRAVEL_U
