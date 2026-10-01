@@ -2,6 +2,8 @@
 @EndUserText.label: 'Booking Projection View'
 @Metadata.ignorePropagatedAnnotations: true
 
+@Metadata.allowExtensions: true
+
 @Search.searchable: true
 
 define view entity ZUMNGD_C_BOOKING_U
