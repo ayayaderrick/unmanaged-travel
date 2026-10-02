@@ -1,0 +1,5 @@
+CLASS zunmgd_bp_travel_u DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zumngd_i_travel_u.
+ENDCLASS.
+
+CLASS zunmgd_bp_travel_u IMPLEMENTATION.
+ENDCLASS.
