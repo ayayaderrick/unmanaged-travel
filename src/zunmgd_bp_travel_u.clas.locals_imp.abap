@@ -27,7 +27,7 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS cba_Booking FOR MODIFY
        entities_cba FOR CREATE Travel\_Booking.
 
-        METHODS map_messages
+    METHODS map_messages
       IMPORTING
         cid          TYPE string         OPTIONAL
         travel_id    TYPE /dmo/travel_id OPTIONAL
@@ -54,7 +54,7 @@ ENDCLASS.
 CLASS lhc_Travel IMPLEMENTATION.
 
   METHOD create.
-      DATA: messages   TYPE /dmo/t_message,
+    DATA: messages   TYPE /dmo/t_message,
           travel_in  TYPE /dmo/travel,
           travel_out TYPE /dmo/travel.
 
@@ -140,7 +140,7 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD map_messages_assoc_to_booking.
-    ASSERT cid is not initial.  "In a create case, the %cid has to be present
+    ASSERT cid IS NOT INITIAL.  "In a create case, the %cid has to be present
     failed_added = abap_false.
     LOOP AT messages INTO DATA(message).
       IF ( message-msgty = 'E' OR message-msgty = 'A' ) AND
@@ -196,12 +196,34 @@ CLASS lsc_ZUMNGD_I_TRAVEL_U IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD adjust_numbers.
+
+    DATA: travel_mapping       TYPE /dmo/if_flight_legacy=>tt_ln_travel_mapping,
+          booking_mapping      TYPE /dmo/if_flight_legacy=>tt_ln_booking_mapping,
+          bookingsuppl_mapping TYPE /dmo/if_flight_legacy=>tt_ln_bookingsuppl_mapping.
+
+    CALL FUNCTION '/DMO/FLIGHT_TRAVEL_ADJ_NUMBERS'
+      IMPORTING
+        et_travel_mapping       = travel_mapping
+        et_booking_mapping      = booking_mapping
+        et_bookingsuppl_mapping = bookingsuppl_mapping.
+
+    mapped-travel = VALUE #( FOR travel IN travel_mapping ( %tmp = VALUE #( TravelID = travel-preliminary-travel_id )
+                                                                            TravelID = travel-final-travel_id ) ).
+
+    mapped-booking = VALUE #( FOR booking IN booking_mapping ( %tmp = VALUE #( TravelID = booking-preliminary-travel_id
+                                                                               BookingID = booking-preliminary-booking_id )
+                                                                               TravelID = booking-final-travel_id
+                                                                               BookingID = booking-final-booking_id ) ).
+
+
   ENDMETHOD.
 
   METHOD save.
+    CALL FUNCTION '/DMO/FLIGHT_TRAVEL_SAVE'.
   ENDMETHOD.
 
   METHOD cleanup.
+    CALL FUNCTION '/DMO/FLIGHT_TRAVEL_INITIALIZE'.
   ENDMETHOD.
 
   METHOD cleanup_finalize.
