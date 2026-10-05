@@ -11,6 +11,10 @@ etag master LastChangedAt
   create;
   update;
   delete;
+
+  action ( features : instance ) set_status_booked result [1] $self;
+
+
   field ( readonly ) TravelId;
   association _Booking { create ( features : instance ); }
 

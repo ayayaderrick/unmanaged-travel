@@ -28,6 +28,8 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
        entities_cba FOR CREATE Travel\_Booking.
     METHODS get_instance_features FOR INSTANCE FEATURES
       keys REQUEST requested_features FOR Travel RESULT result.
+    METHODS set_status_booked FOR MODIFY
+       keys FOR ACTION travel~set_status_booked RESULT result.
 
     METHODS map_messages
       IMPORTING
@@ -453,6 +455,52 @@ CLASS lhc_Travel IMPLEMENTATION.
         %assoc-_Booking                     = COND #( WHEN travel_read_result-Status = 'B' OR travel_read_result-Status = 'X'
                                                       THEN if_abap_behv=>fc-o-disabled ELSE if_abap_behv=>fc-o-enabled )
       ) ).
+
+  ENDMETHOD.
+
+  METHOD set_status_booked.
+
+    DATA: messages                 TYPE /dmo/t_message,
+          travel_out               TYPE /dmo/travel,
+          travel_set_status_booked LIKE LINE OF result.
+
+    CLEAR result.
+
+    LOOP AT keys ASSIGNING FIELD-SYMBOL(<travel_set_status_booked>).
+
+      DATA(travelid) = <travel_set_status_booked>-travelid.
+
+      CALL FUNCTION '/DMO/FLIGHT_TRAVEL_SET_BOOKING'
+        EXPORTING
+          iv_travel_id = travelid
+        IMPORTING
+          et_messages  = messages.
+
+      map_messages(
+          EXPORTING
+            travel_id        = <travel_set_status_booked>-TravelID
+            messages         = messages
+          IMPORTING
+            failed_added = DATA(failed_added)
+          CHANGING
+            failed           = failed-travel
+            reported         = reported-travel
+        ).
+
+      IF failed_added = abap_false.
+        CALL FUNCTION '/DMO/FLIGHT_TRAVEL_READ'
+          EXPORTING
+            iv_travel_id = travelid
+          IMPORTING
+            es_travel    = travel_out.
+
+        travel_set_status_booked-travelid        = travelid.
+        travel_set_status_booked-%param          = CORRESPONDING #( travel_out MAPPING TO ENTITY ).
+        travel_set_status_booked-%param-travelid = travelid.
+        APPEND travel_set_status_booked TO result.
+      ENDIF.
+
+    ENDLOOP.
 
   ENDMETHOD.
 
