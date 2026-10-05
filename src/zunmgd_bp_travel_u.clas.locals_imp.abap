@@ -450,8 +450,8 @@ CLASS lhc_Travel IMPLEMENTATION.
     result = VALUE #(
       FOR travel_read_result IN travel_read_results (
         %tky                                = travel_read_result-%tky
-*        %features-%action-set_status_booked = COND #( WHEN travel_read_result-Status = 'B'
-*                                                      THEN if_abap_behv=>fc-o-disabled ELSE if_abap_behv=>fc-o-enabled )
+        %features-%action-set_status_booked = COND #( WHEN travel_read_result-Status = 'B'
+                                                      THEN if_abap_behv=>fc-o-disabled ELSE if_abap_behv=>fc-o-enabled )
         %assoc-_Booking                     = COND #( WHEN travel_read_result-Status = 'B' OR travel_read_result-Status = 'X'
                                                       THEN if_abap_behv=>fc-o-disabled ELSE if_abap_behv=>fc-o-enabled )
       ) ).
