@@ -126,6 +126,29 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD delete.
+
+    DATA: messages TYPE /dmo/t_message.
+
+    LOOP AT keys ASSIGNING FIELD-SYMBOL(<travel_delete>).
+
+      CALL FUNCTION '/DMO/FLIGHT_TRAVEL_DELETE'
+        EXPORTING
+          iv_travel_id = <travel_delete>-travelid
+        IMPORTING
+          et_messages  = messages.
+
+      map_messages(
+          EXPORTING
+            cid       = <travel_delete>-%cid_ref
+            travel_id = <travel_delete>-travelid
+            messages  = messages
+          CHANGING
+            failed    = failed-travel
+            reported  = reported-travel
+        ).
+
+    ENDLOOP.
+
   ENDMETHOD.
 
   METHOD read.
