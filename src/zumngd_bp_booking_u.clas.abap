@@ -1,0 +1,5 @@
+CLASS zumngd_bp_booking_u DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zumngd_i_travel_u.
+ENDCLASS.
+
+CLASS zumngd_bp_booking_u IMPLEMENTATION.
+ENDCLASS.

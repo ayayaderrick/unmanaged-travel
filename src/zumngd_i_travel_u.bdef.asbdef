@@ -1,0 +1,63 @@
+unmanaged implementation in class ZUNMGD_BP_TRAVEL_U unique;
+strict ( 2 );
+
+define behavior for ZUMNGD_I_Travel_U alias Travel
+implementation in class ZUNMGD_BP_TRAVEL_U unique
+late numbering
+lock master
+authorization master ( none )
+etag master LastChangedAt
+{
+  create;
+  update;
+  delete;
+
+  action ( features : instance ) set_status_booked result [1] $self;
+
+
+  field ( readonly ) TravelId;
+  association _Booking { create ( features : instance ); }
+
+    mapping for /dmo/travel control /dmo/s_travel_intx
+    {
+      AgencyID      = agency_id;
+      BeginDate     = begin_date;
+      BookingFee    = booking_fee;
+      CurrencyCode  = currency_code;
+      CustomerID    = customer_id;
+      EndDate       = end_date;
+      LastChangedAt = lastchangedat;
+      Memo          = description;
+      Status        = status;
+      TotalPrice    = total_price;
+      TravelID      = travel_id;
+    }
+
+}
+
+define behavior for ZUMNGD_I_Booking_U alias Booking
+implementation in class ZUMNGD_BP_BOOKING_U unique
+late numbering
+lock dependent by _Travel
+authorization dependent by _Travel
+etag dependent by _Travel
+{
+  update;
+  delete;
+  field ( readonly ) TravelId, BookingId;
+  association _Travel;
+
+  mapping for /dmo/booking control /dmo/s_booking_intx
+    {
+      AirlineID    = carrier_id;
+      BookingDate  = booking_date;
+      BookingID    = booking_id;
+      ConnectionID = connection_id;
+      CurrencyCode = currency_code;
+      CustomerID   = customer_id;
+      FlightDate   = flight_date;
+      FlightPrice  = flight_price;
+      TravelID     = travel_id;
+    }
+
+}
