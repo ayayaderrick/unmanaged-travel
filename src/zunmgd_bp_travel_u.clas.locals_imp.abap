@@ -188,6 +188,63 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD rba_Booking.
+
+    DATA: travel_out  TYPE /dmo/travel,
+          booking_out TYPE /dmo/t_booking,
+          booking     LIKE LINE OF result,
+          messages    TYPE /dmo/t_message.
+
+
+    LOOP AT keys_rba ASSIGNING FIELD-SYMBOL(<travel_rba>) GROUP BY <travel_rba>-TravelID.
+
+      CALL FUNCTION '/DMO/FLIGHT_TRAVEL_READ'
+        EXPORTING
+          iv_travel_id = <travel_rba>-travelid
+        IMPORTING
+          es_travel    = travel_out
+          et_booking   = booking_out
+          et_messages  = messages.
+
+      map_messages(
+          EXPORTING
+            travel_id        = <travel_rba>-TravelID
+            messages         = messages
+            IMPORTING
+            failed_added = DATA(failed_added)
+          CHANGING
+            failed           = failed-travel
+            reported         = reported-travel
+        ).
+
+      IF failed_added = abap_false.
+        LOOP AT booking_out ASSIGNING FIELD-SYMBOL(<booking>).
+          "fill link table with key fields
+
+          INSERT
+            VALUE #(
+              source-%tky = <travel_rba>-%tky
+              target-%tky = VALUE #(
+                                TravelID  = <booking>-travel_id
+                                BookingID = <booking>-booking_id
+              ) )
+            INTO TABLE association_links.
+
+          IF result_requested = abap_true.
+            booking = CORRESPONDING #( <booking> MAPPING TO ENTITY ).
+            INSERT booking INTO TABLE result.
+          ENDIF.
+
+        ENDLOOP.
+      ENDIF.
+
+    ENDLOOP.
+
+    SORT association_links BY target ASCENDING.
+    DELETE ADJACENT DUPLICATES FROM association_links COMPARING ALL FIELDS.
+
+    SORT result BY %tky ASCENDING.
+    DELETE ADJACENT DUPLICATES FROM result COMPARING ALL FIELDS.
+
   ENDMETHOD.
 
   METHOD cba_Booking.
