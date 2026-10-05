@@ -26,6 +26,8 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS cba_Booking FOR MODIFY
        entities_cba FOR CREATE Travel\_Booking.
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      keys REQUEST requested_features FOR Travel RESULT result.
 
     METHODS map_messages
       IMPORTING
@@ -339,6 +341,26 @@ CLASS lhc_Travel IMPLEMENTATION.
                       %cid          = cid )
              TO reported.
     ENDLOOP.
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+
+    READ ENTITIES OF zumngd_I_Travel_U IN LOCAL MODE
+      ENTITY Travel
+        FIELDS ( TravelID Status )
+        WITH CORRESPONDING #( keys )
+    RESULT DATA(travel_read_results)
+    FAILED failed.
+
+    result = VALUE #(
+      FOR travel_read_result IN travel_read_results (
+        %tky                                = travel_read_result-%tky
+*        %features-%action-set_status_booked = COND #( WHEN travel_read_result-Status = 'B'
+*                                                      THEN if_abap_behv=>fc-o-disabled ELSE if_abap_behv=>fc-o-enabled )
+        %assoc-_Booking                     = COND #( WHEN travel_read_result-Status = 'B' OR travel_read_result-Status = 'X'
+                                                      THEN if_abap_behv=>fc-o-disabled ELSE if_abap_behv=>fc-o-enabled )
+      ) ).
+
   ENDMETHOD.
 
 ENDCLASS.

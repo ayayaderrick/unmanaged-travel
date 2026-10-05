@@ -12,7 +12,7 @@ etag master LastChangedAt
   update;
   delete;
   field ( readonly ) TravelId;
-  association _Booking { create; }
+  association _Booking { create ( features : instance ); }
 
     mapping for /dmo/travel control /dmo/s_travel_intx
     {
