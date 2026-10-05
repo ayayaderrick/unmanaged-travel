@@ -185,6 +185,42 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD lock.
+
+    TRY.
+        "Instantiate lock object
+        DATA(lock) = cl_abap_lock_object_factory=>get_instance( iv_name = '/DMO/ETRAVEL' ).
+      CATCH cx_abap_lock_failure INTO DATA(exception).
+        RAISE SHORTDUMP exception.
+    ENDTRY.
+
+    LOOP AT keys ASSIGNING FIELD-SYMBOL(<travel>).
+      TRY.
+          "enqueue travel instance
+          lock->enqueue(
+              it_parameter  = VALUE #( (  name = 'TRAVEL_ID' value = REF #( <travel>-travelid ) ) )
+          ).
+          "if foreign lock exists
+        CATCH cx_abap_foreign_lock INTO DATA(foreign_lock).
+          map_messages(
+           EXPORTING
+                travel_id = <travel>-TravelID
+                messages  =  VALUE #( (
+                                           msgid = '/DMO/CM_FLIGHT_LEGAC'
+                                           msgty = 'E'
+                                           msgno = '032'
+                                           msgv1 = <travel>-travelid
+                                           msgv2 = foreign_lock->user_name )
+                          )
+              CHANGING
+                failed    = failed-travel
+                reported  = reported-travel
+            ).
+
+        CATCH cx_abap_lock_failure INTO exception.
+          RAISE SHORTDUMP exception.
+      ENDTRY.
+    ENDLOOP.
+
   ENDMETHOD.
 
   METHOD rba_Booking.
