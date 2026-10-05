@@ -189,6 +189,98 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD cba_Booking.
+
+    DATA: messages        TYPE /dmo/t_message,
+          booking_old     TYPE /dmo/t_booking,
+          booking         TYPE /dmo/booking,
+          last_booking_id TYPE /dmo/booking_id VALUE '0'.
+
+    LOOP AT entities_cba ASSIGNING FIELD-SYMBOL(<travel>).
+
+      DATA(travelid) = <travel>-travelid.
+
+      CALL FUNCTION '/DMO/FLIGHT_TRAVEL_READ'
+        EXPORTING
+          iv_travel_id = travelid
+        IMPORTING
+          et_booking   = booking_old
+          et_messages  = messages.
+
+      map_messages(
+          EXPORTING
+            cid          = <travel>-%cid_ref
+            travel_id    = <travel>-TravelID
+            messages     = messages
+          IMPORTING
+            failed_added = DATA(failed_added)
+          CHANGING
+            failed       = failed-travel
+            reported     = reported-travel
+        ).
+
+      IF failed_added = abap_true.
+        LOOP AT <travel>-%target ASSIGNING FIELD-SYMBOL(<booking>).
+          map_messages_assoc_to_booking(
+            EXPORTING
+              cid          = <booking>-%cid
+              is_dependend = abap_true
+              messages     = messages
+            CHANGING
+              failed       = failed-booking
+              reported     = reported-booking
+          ).
+        ENDLOOP.
+
+      ELSE.
+
+        " Set the last_booking_id to the highest value of booking_old booking_id or initial value if none exist
+        last_booking_id = VALUE #( booking_old[ lines( booking_old ) ]-booking_id OPTIONAL ).
+
+        LOOP AT <travel>-%target ASSIGNING FIELD-SYMBOL(<booking_create>).
+
+          booking = CORRESPONDING #( <booking_create> MAPPING FROM ENTITY USING CONTROL ) .
+
+          last_booking_id += 1.
+          booking-booking_id = last_booking_id.
+
+          CALL FUNCTION '/DMO/FLIGHT_TRAVEL_UPDATE'
+            EXPORTING
+              is_travel   = VALUE /dmo/s_travel_in( travel_id = travelid )
+              is_travelx  = VALUE /dmo/s_travel_inx( travel_id = travelid )
+              it_booking  = VALUE /dmo/t_booking_in( ( CORRESPONDING #( booking ) ) )
+              it_bookingx = VALUE /dmo/t_booking_inx(
+                (
+                  booking_id  = booking-booking_id
+                  action_code = /dmo/if_flight_legacy=>action_code-create
+                )
+              )
+            IMPORTING
+              et_messages = messages.
+
+          map_messages_assoc_to_booking(
+              EXPORTING
+                cid          = <booking_create>-%cid
+                messages     = messages
+              IMPORTING
+                failed_added = failed_added
+              CHANGING
+                failed       = failed-booking
+                reported     = reported-booking
+            ).
+
+          IF failed_added = abap_false.
+            INSERT
+              VALUE #(
+                %cid      = <booking_create>-%cid
+                travelid  = travelid
+                bookingid = booking-booking_id
+              ) INTO TABLE mapped-booking.
+          ENDIF.
+
+        ENDLOOP.
+      ENDIF.
+    ENDLOOP.
+
   ENDMETHOD.
 
   METHOD map_messages.
