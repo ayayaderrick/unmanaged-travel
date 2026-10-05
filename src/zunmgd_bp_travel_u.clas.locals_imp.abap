@@ -93,6 +93,36 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD update.
+    DATA: messages TYPE /dmo/t_message,
+          travel   TYPE /dmo/travel,
+          travelx  TYPE /dmo/s_travel_inx. "refers to x structure (> BAPIs)
+
+    LOOP AT entities ASSIGNING FIELD-SYMBOL(<travel_update>).
+
+      travel = CORRESPONDING #( <travel_update> MAPPING FROM ENTITY ).
+
+      travelx-travel_id = <travel_update>-TravelID.
+      travelx-_intx     = CORRESPONDING #( <travel_update> MAPPING FROM ENTITY ).
+
+      CALL FUNCTION '/DMO/FLIGHT_TRAVEL_UPDATE'
+        EXPORTING
+          is_travel   = CORRESPONDING /dmo/s_travel_in( travel )
+          is_travelx  = travelx
+        IMPORTING
+          et_messages = messages.
+
+      map_messages(
+          EXPORTING
+            cid       = <travel_update>-%cid_ref
+            travel_id = <travel_update>-travelid
+            messages  = messages
+          CHANGING
+            failed    = failed-travel
+            reported  = reported-travel
+        ).
+
+    ENDLOOP.
+
   ENDMETHOD.
 
   METHOD delete.
