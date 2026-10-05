@@ -129,6 +129,34 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD read.
+    DATA: travel_out TYPE /dmo/travel,
+          messages   TYPE /dmo/t_message.
+
+    LOOP AT keys ASSIGNING FIELD-SYMBOL(<travel_to_read>) GROUP BY <travel_to_read>-%tky.
+
+      CALL FUNCTION '/DMO/FLIGHT_TRAVEL_READ'
+        EXPORTING
+          iv_travel_id = <travel_to_read>-travelid
+        IMPORTING
+          es_travel    = travel_out
+          et_messages  = messages.
+
+      map_messages(
+          EXPORTING
+            travel_id        = <travel_to_read>-TravelID
+            messages         = messages
+          IMPORTING
+            failed_added = DATA(failed_added)
+          CHANGING
+            failed           = failed-travel
+            reported         = reported-travel
+        ).
+
+      IF failed_added = abap_false.
+        INSERT CORRESPONDING #( travel_out MAPPING TO ENTITY ) INTO TABLE result.
+      ENDIF.
+    ENDLOOP.
+
   ENDMETHOD.
 
   METHOD lock.
