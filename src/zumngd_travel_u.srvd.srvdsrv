@@ -2,7 +2,7 @@
 @ObjectModel.leadingEntity.name: 'ZUMNGD_C_TRAVEL_U'
 define service ZUMNGD_TRAVEL_U {
   expose ZUMNGD_C_TRAVEL_U            as Travel;
-  expose /DMO/C_Booking_U             as Booking;
+  expose ZUMNGD_C_BOOKING_U           as Booking;
   expose /DMO/C_BookingSupplement_U   as BookingSupplement;
   expose /DMO/I_Supplement_StdVH      as Supplement;
   expose /DMO/I_SupplementCategory_VH as SupplementCategory;
